@@ -1,0 +1,120 @@
+# Cousera_Assignment1
+#The requirement of this assignment is to write 3 functions which are supposed to interact with the data set containing 200 csv
+files.
+#The main goal of this function is listed below
+  1)Write a function named 'pollutantmean' 
+  that calculates the mean of a pollutant (sulfate or nitrate) across a specified list of monitors
+  
+  2)Write a function that reads a directory full of files and reports the number of completely observed cases in each data file.
+  
+  3)Write a function that takes a directory of data files and a threshold for complete cases and 
+  calculates the correlation between sulfate and nitrate for monitor locations where the number of 
+  completely observed cases (on all variables) is greater than the threshold
+#More information can be found at Cousera website(https://class.coursera.org/rprog-030/assignment/view?assignment_id=3)
+#Please note that the dataset can also be downloaded from the website above.
+
+1)POLLUTANT MEAN 
+pollutantmean <- function(directory, pollutant = "sulfate", id = 1:332) {
+    ## 'directory' is a character vector of length 1 indicating
+    ## the location of the CSV files
+    
+    ## 'pollutant' is a character vector of length 1 indicating
+    ## the name of the pollutant for which we will calculate the
+    ## mean; either "sulfate" or "nitrate".
+    
+    ## 'id' is an integer vector indicating the monitor ID numbers
+    ## to be used
+    
+    ## Return the mean of the pollutant across all monitors list
+    ## in the 'id' vector (ignoring NA values)
+    
+    # set working directory
+    if(grep("specdata", directory) == 1) {
+        directory <- ("./specdata/")
+    }
+    # initialize a vector to hold the pollutant data
+    mean_vector <- c()
+    # find all files in the specdata folder
+    all_files <- as.character( list.files(directory) )
+    file_paths <- paste(directory, all_files, sep="")
+    for(i in id) {
+        current_file <- read.csv(file_paths[i], header=T, sep=",")
+        head(current_file)
+        pollutant
+        na_removed <- current_file[!is.na(current_file[, pollutant]), pollutant]
+        mean_vector <- c(mean_vector, na_removed)
+    }
+    result <- mean(mean_vector)
+    return(round(result, 3)) 
+}
+
+2)Complete Function 
+complete <- function(directory, id = 1:332) {
+    ## 'directory' is a character vector of length 1 indicating
+    ## the location of the CSV files
+    
+    ## 'id' is an integer vector indicating the monitor ID numbers
+    ## to be used
+    
+    ## Return a data frame of the form:
+    ## id nobs
+    ## 1  117
+    ## 2  1041
+    ## ...
+    ## where 'id' is the monitor ID number and 'nobs' is the
+    ## number of complete cases
+    
+    # set working directory
+    if(grep("specdata", directory) == 1) {
+        directory <- ("./specdata/")
+    }
+    # get the length of id vector
+    id_len <- length(id)
+    complete_data <- rep(0, id_len)
+    # find all files in the specdata folder
+    all_files <- as.character( list.files(directory) )
+    file_paths <- paste(directory, all_files, sep="")
+    j <- 1 
+    for (i in id) {
+        current_file <- read.csv(file_paths[i], header=T, sep=",")
+        complete_data[j] <- sum(complete.cases(current_file))
+        j <- j + 1
+    }
+    result <- data.frame(id = id, nobs = complete_data)
+    return(result)
+} 
+
+3)Correlation 
+corr <- function(directory, threshold = 0) {
+    if(grep("specdata", directory) == 1) {
+        directory <- ("./specdata/")
+    }
+    # get the complete table
+    complete_table <- complete("specdata", 1:332)
+    nobs <- complete_table$nobs
+    # find the valid ids
+    ids <- complete_table$id[nobs > threshold]
+    # get the length of ids vector
+    id_len <- length(ids)
+    corr_vector <- rep(0, id_len)
+    # find all files in the specdata folder
+    all_files <- as.character( list.files(directory) )
+    file_paths <- paste(directory, all_files, sep="")
+    j <- 1
+    for(i in ids) {
+        current_file <- read.csv(file_paths[i], header=T, sep=",")
+        corr_vector[j] <- cor(current_file$sulfate, current_file$nitrate, use="complete.obs")
+        j <- j + 1
+    }
+    result <- corr_vector
+    return(result)   
+}
+
+# tests
+cr <- corr("specdata", 150)
+head(cr)
+cr <- corr("specdata", 400)
+head(cr)
+cr <- corr("specdata", 5000)
+summary(cr)
+
